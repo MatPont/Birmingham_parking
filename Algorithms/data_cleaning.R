@@ -66,53 +66,69 @@ sort_dataframe <- function(data){
 
 
 # Create missing rows on the dataframe using average 
-add_missing_values <- function (data) {
-  print("Starting...")
-  newdf <- rbind(data[1,])
+get_missing_values <- function (data) {
+  
+  # Inner function to add multiple rows based on gap time
+  add_multiple_rows <- function(data1, data2, newdf){
+    time_diff <- difftime(data2[1,5], data1[1,5], units="mins")
+    if(time_diff > 30) {
+      row_to_add <- as.integer((time_diff-30)/30)
+      # Add multiple rows based on gap time
+      for(i in 1:row_to_add){
+        # Add row
+        new_row <- as.matrix(data1)
+        new_row[3] = as.integer( data1[1,3] + i*(data2[1,3] - data1[1,3])/(row_to_add+1) )
+        new_row[5] = as.character(ymd_hms(new_row[5]) + (i*30*60))
+        new_row[4] <- new_row[5]
+        newdf <- rbind(newdf, new_row) 
+      }
+    } 
+    return(newdf)
+  }
+  
+  #print("Starting...")
+  newdf <- rbind(data[1, ])
   for (idx in 1:(dim(data)[1]-1)) {
     
     #progress_percent<-as.integer(idx/dim(data)[1]*100)
     #progress(progress_percent, progress.bar = FALSE)
     
-    current_day<-as.Date(as.POSIXlt(data[idx,5], tz = "Europe/Amsterdam"),"%Y-%m-%d")
-    next_row_day<-as.Date(as.POSIXlt(data[idx+1,5], tz = "Europe/Amsterdam"),"%Y-%m-%d")
+    current_day <- as.Date(as.POSIXlt(data[idx, 5], tz = "Europe/Amsterdam"), "%Y-%m-%d")
+    next_row_day <- as.Date(as.POSIXlt(data[idx+1, 5], tz = "Europe/Amsterdam"), "%Y-%m-%d")
     
-    #If both parkinglot code are the same
-    if(data[idx,1]==data[idx+1,1]) {
-      #if same day
-      if(current_day == next_row_day & difftime(data[idx+1,5],data[idx,5],units="mins") > 30) {
-        # Add row
-        new_row<-as.matrix(data[idx,])
-        new_row[3]=as.integer(mean(c(data[idx,3],data[idx+1,3])))
-        new_row[5]=as.character(ymd_hms(new_row[5]) + (30*60))
-        new_row[4]<-new_row[5]
-        newdf <- rbind(newdf,new_row)
-        next  
-      }
-      # If different days
-      if(current_day != next_row_day & difftime(data[idx+1,5],data[idx,5],units="hours") > 16) {
-        new_row=as.matrix(data[idx,])
-        #Add row to same day
-        if(as.POSIXlt(data[idx,5], tz = "Europe/Amsterdam")$hour < 16) {
-          new_row<-as.matrix(data[idx,])
-          new_row[5]=as.character(ymd_hms(new_row[5]) + (30*60))
-        }
-        
-        #Add row the following day
-        else {
-          new_row<-as.matrix(data[idx+1,])
-          new_row[5]=as.character(ymd_hms(new_row[5]) - (30*60))
-        }
-        new_row[3]=as.integer(mean(c(data[idx,3],data[idx+1,3])))
-        new_row[4]<-new_row[5]
-        newdf <- rbind(newdf,new_row)
+    # If both parkinglot code are the same
+    if(data[idx, 1] == data[idx+1, 1]) {
+      
+      # If same day
+      if(current_day == next_row_day){
+        newdf <- add_multiple_rows(data[idx,], data[idx+1,], newdf)
         next
       }
       
+      # If different days
+      if(current_day != next_row_day) {
+        # Add rows to current day if the measure it's not the last one (16h30)
+        if( ! (data[idx, 5]$hour == 16 & data[idx, 5]$min == 30)){
+          temp <- data[idx, ]
+          diff <- (17 - data[idx, 5]$hour)*60 - data[idx, 5]$min
+          # Make fictitious date at 17h to fill the gap
+          temp[5] = as.character(ymd_hms(data[idx, 5]) + (diff*60))
+          newdf <- add_multiple_rows(data[idx, ], temp, newdf)
+        }
+        # Add rows to new day if the measure it's not the first one (8h)
+        if( ! (data[idx+1, 5]$hour == 8 & data[idx+1, 5]$min == 0)){
+          temp <- data[idx+1, ]
+          diff <- (7 - data[idx+1, 5]$hour)*60 + (30 - data[idx+1, 5]$min)
+          # Make fictitious date at 7h30 to fill the gap
+          temp[5] = as.character(ymd_hms(data[idx+1, 5]) + (diff*60))
+          newdf <- add_multiple_rows(temp, data[idx+1, ], newdf)
+        }
+        next
+      }
     }
   }
   
-  newdf <- newdf[-1,]
+  newdf <- newdf[-1, ]
   return(newdf)
 }
 
@@ -156,7 +172,13 @@ data_cleaning <- function(data){
   data[data[, 2] < data[, 3], 3] <- data[data[, 2] < data[,3], 2]
   data[data[, 3] < 0 ,3] <- rep(0, sum(data[, 3] < 0))
   
-  # Fill missing values
+  # Add missing values
+  print("Add missing values...")
+  temp <- get_missing_values(data)
+  data <- rbind(data, temp)
+  data <- sort_dataframe(data)
+  
+  # Fill missing days
   # TODO
   
   # Rename rownames
@@ -273,3 +295,73 @@ verify_data <- function(data){
 }
 verify_data(data)
   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ===========================
+# =========== OLD ===========
+# ===========================
+# Add measurements
+add_missing_values <- function (data, idx) {
+  idx<-1
+  print("Starting...")
+  newdf <- rbind(data[1,])
+  for (idx in 1:(dim(data)[1]-1)) {
+    
+    progress_percent<-as.integer(idx/dim(data)[1]*100)
+    #progress(progress_percent, progress.bar = FALSE)
+    
+    
+    current_day<-as.Date(as.POSIXlt(data[idx,5], tz = "Europe/Amsterdam"),"%Y-%m-%d")
+    next_row_day<-as.Date(as.POSIXlt(data[idx+1,5], tz = "Europe/Amsterdam"),"%Y-%m-%d")
+    
+    #If both parkinglot code are the same
+    if(data[idx,1]==data[idx+1,1]) {
+      #if same day
+      if(current_day == next_row_day & difftime(data[idx+1,5],data[idx,5],units="mins") > 30) {
+        # Add row
+        new_row<-as.matrix(data[idx,])
+        new_row[3]=as.integer(mean(c(data[idx,3],data[idx+1,3])))
+        new_row[5]=as.character(ymd_hms(new_row[5]) + (30*60))
+        new_row[4]<-new_row[5]
+        newdf <- rbind(newdf,new_row)
+        next  
+      }
+      # If different days
+      if(current_day != next_row_day & difftime(data[idx+1,5],data[idx,5],units="hours") > 16) {
+        new_row=as.matrix(data[idx,])
+        #Add row to same day
+        if(as.POSIXlt(data[idx,5], tz = "Europe/Amsterdam")$hour < 16) {
+          new_row<-as.matrix(data[idx,])
+          new_row[5]=as.character(ymd_hms(new_row[5]) + (30*60))
+        }
+        
+        #Add row the following day
+        else {
+          new_row<-as.matrix(data[idx+1,])
+          new_row[5]=as.character(ymd_hms(new_row[5]) - (30*60))
+        }
+        new_row[3]=as.integer(mean(c(data[idx,3],data[idx+1,3])))
+        new_row[4]<-new_row[5]
+        newdf <- rbind(newdf,new_row)
+        next
+      }
+      
+    }
+  }
+  return(newdf)
+}
+# ===========================
