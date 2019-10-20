@@ -58,7 +58,7 @@ fix_first_measure_of_day <- function(data){
 
 
 
-# Sort by name and rounded date
+# Sort by name and (rounded) date
 sort_dataframe <- function(data){
   return(data[order(data[,1], data[,dim(data)[2]]), ])
 }
@@ -68,6 +68,7 @@ sort_dataframe <- function(data){
 # Create missing rows on the dataframe using average 
 get_missing_values <- function (data) {
   
+  # -------------------------------------------------
   # Inner function to add multiple rows based on gap time
   add_multiple_rows <- function(data1, data2, newdf){
     time_diff <- difftime(data2[1,5], data1[1,5], units="mins")
@@ -85,6 +86,7 @@ get_missing_values <- function (data) {
     } 
     return(newdf)
   }
+  # -------------------------------------------------
   
   #print("Starting...")
   newdf <- rbind(data[1, ])
@@ -109,17 +111,17 @@ get_missing_values <- function (data) {
       if(current_day != next_row_day) {
         # Add rows to current day if the measure it's not the last one (16h30)
         if( ! (data[idx, 5]$hour == 16 & data[idx, 5]$min == 30)){
+          # Make fictitious date at 17h to fill the gap
           temp <- data[idx, ]
           diff <- (17 - data[idx, 5]$hour)*60 - data[idx, 5]$min
-          # Make fictitious date at 17h to fill the gap
           temp[5] = as.character(ymd_hms(data[idx, 5]) + (diff*60))
           newdf <- add_multiple_rows(data[idx, ], temp, newdf)
         }
         # Add rows to new day if the measure it's not the first one (8h)
         if( ! (data[idx+1, 5]$hour == 8 & data[idx+1, 5]$min == 0)){
+          # Make fictitious date at 7h30 to fill the gap
           temp <- data[idx+1, ]
           diff <- (7 - data[idx+1, 5]$hour)*60 + (30 - data[idx+1, 5]$min)
-          # Make fictitious date at 7h30 to fill the gap
           temp[5] = as.character(ymd_hms(data[idx+1, 5]) + (diff*60))
           newdf <- add_multiple_rows(temp, data[idx+1, ], newdf)
         }
@@ -134,9 +136,31 @@ get_missing_values <- function (data) {
 
 
 
-# Fill missing days using average on same day but on different week
-fill_missing_days <- function(data){
+# Fill missing days
+get_missing_days <- function(data){
+  alldays <- as.character(seq(as.Date("2016-10-04"), as.Date("2016-12-19"), by="days"))
+  newdf <- rbind(data[1, ])
   
+  for(parking in unique(data[,1])){
+    # Remove hours from time
+    data_parking <- data[data[, 1] == parking, ]
+    measures <- sapply(as.character(data_parking[, 4]), FUN = function(x){ unlist(strsplit(x, " "))[1] })
+    days <- unique(measures)
+    missing_days <- setdiff(alldays, days)
+    for(day in missing_days){
+      temp <- data_parking[1, ]
+      temp[3] <- NA #TODO
+      temp_date <- as.POSIXlt(paste(day, "07:30:00"))
+      for(i in 1:18){
+        temp[5] = as.character(ymd_hms(temp_date) + (i*30*60))
+        temp[4] <- temp[5]
+        newdf <- rbind(newdf, temp)
+      }
+    }
+  }
+  
+  newdf <- newdf[-1, ]
+  return(newdf)
 }
 
 
@@ -176,10 +200,11 @@ data_cleaning <- function(data){
   print("Add missing values...")
   temp <- get_missing_values(data)
   data <- rbind(data, temp)
-  data <- sort_dataframe(data)
   
-  # Fill missing days
-  # TODO
+  # Add missing days
+  print("Add missing days...")
+  temp <- get_missing_days(data)
+  data <- rbind(data, temp)
   
   # Rename rownames
   print("Rename rownames...")
