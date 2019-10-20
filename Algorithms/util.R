@@ -5,7 +5,7 @@ pause <- function(){
   readline(prompt="Press [enter] to continue") 
 }
 
-make_week_dataset <- function(data, num_parking, num_week){
+make_week_dataset <- function(data, num_parking=28, num_week=11){
   # # Add week number and weekday to group data
   # data$LastUpdated_week_hours<-strftime(data$LastUpdated_rounded,format="%w.%H:%M")
   # data$LastUpdated_week<-strftime(as.POSIXlt(data$LastUpdated, tz = "Europe/Amsterdam"),format="%W")
@@ -22,12 +22,12 @@ make_week_dataset <- function(data, num_parking, num_week){
 }
 
 
-make_day_dataset <- function(data, num_parking, num_day){
+make_day_dataset <- function(data, num_parking=28, num_day=77){
   final_matrix <- matrix(data[,3], nrow = num_parking*num_day, byrow = TRUE)
   return(final_matrix)
 }
 
-make_parking_dataset <- function(data, num_parking){
+make_parking_dataset <- function(data, num_parking=28){
   final_matrix <- matrix(data[,3], nrow = num_parking, byrow = TRUE)
   return(final_matrix)
 }
