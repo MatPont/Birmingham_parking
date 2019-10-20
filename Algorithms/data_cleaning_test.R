@@ -1,0 +1,186 @@
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+
+library(lubridate)
+
+source("util.R")
+source("data_cleaning.R")
+
+
+
+
+data <- read.table("../Datasets/dataset.csv", sep=",", header = TRUE)
+data <- data_cleaning(data)
+
+
+
+
+
+
+
+# =================================================
+# =========== Data cleaning experiments ===========
+# =================================================
+# Check outliers
+sum(data[, 2] < data[, 3])
+sum(data[, 3] < 0)
+
+# Manage outliers
+data[data[, 2] < data[, 3], 3] <- data[data[, 2] < data[,3], 2]
+data[data[, 3] < 0 ,3] <- rep(0, sum(data[, 3] < 0))
+
+# Check outliers
+sum(data[, 2] < data[, 3])
+sum(data[, 3] < 0)
+
+# Count number of lines for each parking
+names <- c()
+numbers <- c()
+for(i in unique(data[,1])){
+  print(i)
+  print(sum(data[,1] == i))
+  names <- c(names, i)
+  numbers <- c(numbers, sum(data[,1] == i))
+}
+names(numbers) <- names
+par(mar=c(10,5,3,3)) # left margin space
+barplot(numbers, las=2, col = ifelse(numbers < 1000, "red", "cadetblue2"))
+
+
+
+verify_dates <- function(data){
+  total <- 0
+  total_true <- 0
+  #x <- data[,4]
+  dates <- data[,5]
+  names <- data[,1] 
+  occupancies <- data[,3]
+  for(i in 2:(length(dates)-1)){
+    date_1 = dates[i]
+    date_2 = dates[i+1]
+    
+    if(names[i] == names[i+1] && date_1 == date_2){
+      print(data[i-1,])
+      print(data[i,])
+      print(data[i+1,])
+      if(i < (length(dates)-1)){
+        print(data[i+2,])  
+        print((data[i,3] > data[i+1,3] && data[i+1,3] > data[i+2,3]) || (data[i,3] < data[i+1,3] && data[i+1,3] < data[i+2,3]))
+        if((data[i,3] > data[i+1,3] && data[i+1,3] > data[i+2,3]) || (data[i,3] < data[i+1,3] && data[i+1,3] < data[i+2,3]))
+          total_true <- total_true + 1
+        cat("moyenne",mean(c(data[i,3],data[i+2,3])), "\n")
+        print(data[i+1,3])
+      }
+      temp <- data[data[,1] == names[i], ]
+      temp <- temp[temp[,5]$mday == date_1$mday, ]
+      temp <- temp[temp[,5]$mon == date_1$mon, ]
+      print(dim(temp)[1])
+      
+      total <- total + 1
+      #pause()
+    }
+  }
+  
+  print("=======")
+  print(total)
+  print(total_true)
+}
+
+verify_dates(data)
+
+
+
+
+verify_data <- function(data){
+  alldays <- as.character(seq(as.Date("2016-10-04"), as.Date("2016-12-19"), by="days"))
+  measures_per_day <- 18
+  
+  # Check if all days have 18 measures
+  for(parking in unique(data[,1])){
+    print("=================================================")
+    print(parking)
+    # Remove hours from time
+    measures <- sapply(as.character(data[data[, 1] == parking, 4]), FUN = function(x){ unlist(strsplit(x, " "))[1] })
+    days <- unique(measures)
+    cat("measures:", length(measures), "/", measures_per_day*length(alldays), "\n")
+    cat("days:", length(days), "/", length(alldays), "\n")
+    cat("missing days:", setdiff(alldays, days), "\n")
+    print("non-full days:")
+    for(day in unique(measures)){
+      if(sum(measures == day) != 18){
+        cat(day, ": ", sum(measures == day), "\n")
+      }
+    }
+  }
+}
+verify_data(data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ===========================
+# =========== OLD ===========
+# ===========================
+# Add measurements
+add_missing_values <- function (data, idx) {
+  idx<-1
+  print("Starting...")
+  newdf <- rbind(data[1,])
+  for (idx in 1:(dim(data)[1]-1)) {
+    
+    progress_percent<-as.integer(idx/dim(data)[1]*100)
+    #progress(progress_percent, progress.bar = FALSE)
+    
+    
+    current_day<-as.Date(as.POSIXlt(data[idx,5], tz = "Europe/Amsterdam"),"%Y-%m-%d")
+    next_row_day<-as.Date(as.POSIXlt(data[idx+1,5], tz = "Europe/Amsterdam"),"%Y-%m-%d")
+    
+    #If both parkinglot code are the same
+    if(data[idx,1]==data[idx+1,1]) {
+      #if same day
+      if(current_day == next_row_day & difftime(data[idx+1,5],data[idx,5],units="mins") > 30) {
+        # Add row
+        new_row<-as.matrix(data[idx,])
+        new_row[3]=as.integer(mean(c(data[idx,3],data[idx+1,3])))
+        new_row[5]=as.character(ymd_hms(new_row[5]) + (30*60))
+        new_row[4]<-new_row[5]
+        newdf <- rbind(newdf,new_row)
+        next  
+      }
+      # If different days
+      if(current_day != next_row_day & difftime(data[idx+1,5],data[idx,5],units="hours") > 16) {
+        new_row=as.matrix(data[idx,])
+        #Add row to same day
+        if(as.POSIXlt(data[idx,5], tz = "Europe/Amsterdam")$hour < 16) {
+          new_row<-as.matrix(data[idx,])
+          new_row[5]=as.character(ymd_hms(new_row[5]) + (30*60))
+        }
+        
+        #Add row the following day
+        else {
+          new_row<-as.matrix(data[idx+1,])
+          new_row[5]=as.character(ymd_hms(new_row[5]) - (30*60))
+        }
+        new_row[3]=as.integer(mean(c(data[idx,3],data[idx+1,3])))
+        new_row[4]<-new_row[5]
+        newdf <- rbind(newdf,new_row)
+        next
+      }
+      
+    }
+  }
+  return(newdf)
+}
+# ===========================
