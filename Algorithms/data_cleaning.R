@@ -149,11 +149,16 @@ get_missing_days <- function(data){
     missing_days <- setdiff(alldays, days)
     for(day in missing_days){
       temp <- data_parking[1, ]
-      temp[3] <- NA #TODO
+      temp[3] <- NA
       temp_date <- as.POSIXlt(paste(day, "07:30:00"))
+      wday <- temp_date$wday
       for(i in 1:18){
-        temp[5] = as.character(ymd_hms(temp_date) + (i*30*60))
+        new_date <- as.character(ymd_hms(temp_date) + (i*30*60))
+        temp[5] <- new_date
         temp[4] <- temp[5]
+        temp[3] <- as.integer(mean(as.integer(data_parking[data_parking[, 5]$wday == wday & 
+                                       data_parking[, 5]$hour == as.POSIXlt(new_date)$hour & 
+                                       data_parking[, 5]$min == as.POSIXlt(new_date)$min, 3])))
         newdf <- rbind(newdf, temp)
       }
     }
@@ -210,6 +215,7 @@ data_cleaning <- function(data){
   print("Rename rownames...")
   data <- sort_dataframe(data)
   rownames(data) <- 1:dim(data)[1]
+  data[,3] <- as.integer(data[,3])
   
   return(data)
 }
