@@ -3,6 +3,8 @@ library('reshape2')
 
 norm_vec <- function(x) x/sqrt(sum(x^2))
 
+norm_mat <- function(x) t(apply(x, MARGIN = 1, FUN = norm_vec))
+
 pause <- function(){
   readline(prompt="Press [enter] to continue") 
 }
