@@ -1,6 +1,8 @@
 library('dplyr')
 library('reshape2')
 
+norm_vec <- function(x) x/sqrt(sum(x^2))
+
 pause <- function(){
   readline(prompt="Press [enter] to continue") 
 }
@@ -29,5 +31,23 @@ make_day_dataset <- function(data, num_parking=28, num_day=77){
 
 make_parking_dataset <- function(data, num_parking=28){
   final_matrix <- matrix(data[,3], nrow = num_parking, byrow = TRUE)
+  return(final_matrix)
+}
+
+
+
+make_week_label <- function(data, num_parking=28, num_week=11){
+  final_matrix <- rep(unique(data[,1]), rep(num_week, length(unique(data[,1]))))
+  return(final_matrix)
+}
+
+
+make_day_label <- function(data, num_parking=28, num_day=77){
+  final_matrix <- rep(unique(data[,1]), rep(num_day, length(unique(data[,1]))))
+  return(final_matrix)
+}
+
+make_parking_label <- function(data, num_parking=28){
+  final_matrix <- unique(data[,1])
   return(final_matrix)
 }
