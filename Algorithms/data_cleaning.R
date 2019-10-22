@@ -217,5 +217,6 @@ data_cleaning <- function(data){
   rownames(data) <- 1:dim(data)[1]
   data[,3] <- as.integer(data[,3])
   
+  print("Done.")
   return(data)
 }
