@@ -43,6 +43,14 @@ norm_day_data <- day_data / rep(capacities, rep(dim(day_data)[1]/length(capaciti
 norm_week_data <- week_data / rep(capacities, rep(dim(week_data)[1]/length(capacities), length(capacities)))
 norm_park_data <- park_data / rep(capacities, rep(dim(park_data)[1]/length(capacities), length(capacities)))
 
+day_data_meta <- cbind(rep(capacities, rep(dim(day_data)[1]/length(capacities), length(capacities))), 
+                       rep(park_names, rep(dim(day_data)[1]/length(park_names), length(park_names))))
+
+week_data_meta <- cbind(rep(capacities, rep(dim(week_data)[1]/length(capacities), length(capacities))), 
+                       rep(park_names, rep(dim(week_data)[1]/length(park_names), length(park_names))))
+
+park_data_meta <- cbind(rep(capacities, rep(dim(park_data)[1]/length(capacities), length(capacities))), 
+                       rep(park_names, rep(dim(park_data)[1]/length(park_names), length(park_names))))
 
 
 ########################################################
@@ -54,10 +62,25 @@ boxplot(norm_week_data, ylab="Occupation normalisée", xaxt="n", xlab="Jour")
 axis(1, at=seq(1,126,18), labels=c("Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche", "Lundi"), )
 boxplot(t(norm_park_data), ylab = "Occupation")
 boxplot(t(park_data), ylab = "Occupation", )
+  
+layout(1:2)
+
+corrplot::corrplot(cor(t(park_data)), type= "upper", order = "hclust")
+corrplot::corrplot(cor(t(norm_park_data)), type= "upper", order = "hclust")
+
+t_norm_park_data <- t(norm_park_data)
+median_order <- order(apply(t_norm_park_data, MARGIN=2, FUN=median))
+
+par(mar=c(10,5,3,3)) # left margin space
+boxplot(t_norm_park_data[, median_order], ylab="Occupation normalisée", names=park_names[median_order], las=2)
+
+par(mar=c(2,5,2,2)) # left margin space
+barplot(capacities, las=2, xaxt="n")
 
 
-corrplot::corrplot(cor(t(park_data)), type= "upper")
 
+t_park_data <- t(park_data)
+barplot(apply(t_park_data, MARGIN=2, FUN=var))
 
 
 ########################################################
@@ -77,6 +100,7 @@ fviz_pca_ind(resPCA, col.ind = as.factor(unlist(park_label)), label = "none", ad
 ########################################################
 # Correspondance Analysis
 ########################################################
+res_CA <- CA(norm_park_data)
 res_CA <- CA(park_data)
 
 #saveRDS(res_CA, file = "CA.rds")
@@ -84,4 +108,4 @@ res_CA <- CA(park_data)
 #res_CA <- readRDS(file = "CA.rds")
 
 #fviz_ca_row(res_CA, label = "none", col.row = labelK, addEllipses = TRUE, xlim=c(-0.5, 0.5), ylim=c(-1.5, 1.5))
-fviz_ca_row(res_CA, label = "none", col.row = authors, addEllipses = TRUE, xlim=c(-0.5, 0.5), ylim=c(-1.5, 1.5))
+fviz_ca_row(res_CA, label = "none", col.row = as.factor(park_names), addEllipses = TRUE, xlim=c(-0.5, 0.5), ylim=c(-1.5, 1.5))

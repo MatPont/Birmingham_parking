@@ -53,3 +53,9 @@ make_parking_label <- function(data, num_parking=28){
   final_matrix <- unique(data[,1])
   return(final_matrix)
 }
+
+
+
+norm_dataset <- function(park_data, capacities=unlist(read.csv("../Datasets/capacities.csv", row.names = 1))){
+  return(park_data / rep(capacities, rep(dim(park_data)[1]/length(capacities), length(capacities))))
+}
