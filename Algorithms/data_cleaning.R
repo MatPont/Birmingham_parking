@@ -6,10 +6,9 @@ source("util.R")
 
 
 
-# =================================================
-# ================= Data cleaning =================
-# =================================================
-
+########################################################
+# Data cleaning
+########################################################
 # After the round of the dates some of them are equals (eg: 7h50 and 8h10 will be round to 8h)
 # This function fix this problem by keeping the one with the original date closest to the rounded one
 remove_dates_close <- function(data){
