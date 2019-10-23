@@ -17,7 +17,7 @@ cluster.inertia=function(x,y) {
   
   #Inertia within classes
   for(k in classes) {
-    x=as.matrix(weekdf[y == k,])
+    x=as.matrix(x[y == k,])
     a=inertia_class(x)
     centroids=rbind(centroids, a$centroid)
     inertia=rbind(inertia, a$inertia)
@@ -32,18 +32,14 @@ cluster.inertia=function(x,y) {
 
 #### Test
 
-# setwd("/Users/lucasrodriguespereira/Master/app-non-supervise/prj/Datasets")
-# 
-# norm_dataset <- function(park_data, capacities=unlist(read.csv("capacities.csv", row.names = 1))){
-#   return(park_data / rep(capacities, rep(dim(park_data)[1]/length(capacities), length(capacities))))
-# }
-# 
-# 
-# weekdf=read.csv('week_dataset.csv', row.names = 1)
-# weekdf=norm_dataset(weekdf)
-# 
-# x=weekdf
-# result=kmeans(x,3)
-# y=result$cluster
-# inertie=cluster.inertia(x,y)
-# inertie
+setwd("/Users/lucasrodriguespereira/Master/app-non-supervise/prj/Datasets")
+norm_dataset <- function(park_data, capacities=unlist(read.csv("capacities.csv", row.names = 1))){
+ return(park_data / rep(capacities, rep(dim(park_data)[1]/length(capacities), length(capacities))))
+}
+weekdf=read.csv('week_dataset.csv', row.names = 1)
+weekdf=norm_dataset(weekdf)
+x=weekdf
+result=kmeans(x,3)
+y=result$cluster
+inertie=cluster.inertia(x,y)
+inertie
