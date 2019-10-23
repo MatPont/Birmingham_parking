@@ -1,19 +1,41 @@
 setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 
-library(FactoMineR)
-library(factoextra)
+library(TSdist)
+library(TSclust)
+library(cluster)
+library(NbClust)
 
 source("util.R")
 source("data_cleaning.R")
 
-data <- read.table("../Datasets/dataset.csv", sep=",", header = TRUE)
-data <- data_cleaning(data)
+#data <- read.table("../Datasets/dataset.csv", sep=",", header = TRUE)
+#data <- data_cleaning(data)
 
-week_data <- make_week_dataset(data)
-week_label <- make_week_label(data)
+week_data <- read.csv("../Datasets/week_dataset.csv", row.names = 1)
+week_label <- read.csv("../Datasets/week_dataset_label.csv", row.names = 1)
 
-res_kmeans <- kmeans(week_data, 5, nstart = 50)
+norm_week_data <- norm_dataset(week_data)
 
-resPCA <- PCA(week_data)
-fviz_pca_ind(resPCA, col.ind = as.factor(res_kmeans$cluster), label = "none", addEllipses = TRUE)
-fviz_pca_ind(resPCA, col.ind = as.factor(week_label), label = "none", addEllipses = TRUE)
+chi_week_data <- norm_chi_2(norm_week_data)
+
+
+NbClust(chi_week_data, method = "centroid")
+
+
+withinss <- c()
+for(i in 2:10){
+  print(i)
+  # res_spec <- specc(norm_week_data, i, nstart=50)
+  # withinss <- c(withinss, sum(withinss(res_spec)))
+  res_kmeans <- kmeans(chi_week_data, i, nstart = 100)
+  withinss <- c(withinss, res_kmeans$tot.withinss)
+}
+plot(withinss, type='b')
+
+res_kmeans <- kmeans(chi_week_data, 2, nstart = 50)
+plot_charge(norm_week_data, res_kmeans$cluster)
+
+clus.dwt = KMedoids(data=chi_week_data, k=3, "fourier")
+clus.dwt = KMedoids(data=chi_week_data, k=3, "wav")
+plot_charge(norm_week_data, clus.dwt)
+
