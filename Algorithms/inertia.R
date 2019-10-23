@@ -17,8 +17,8 @@ cluster.inertia=function(x,y) {
   
   #Inertia within classes
   for(k in classes) {
-    x=as.matrix(x[y == k,])
-    a=inertia_class(x)
+    x_class=as.matrix(x[y == k,])
+    a=inertia_class(x_class)
     centroids=rbind(centroids, a$centroid)
     inertia=rbind(inertia, a$inertia)
   }
