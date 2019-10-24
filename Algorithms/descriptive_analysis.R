@@ -34,23 +34,13 @@ park_label <- read.csv("../Datasets/parking_dataset_label.csv", row.names = 1)
 ########################################################
 # Normalization
 ########################################################
-norm_day_data <- norm_mat(day_data)
-norm_week_data <- norm_mat(week_data)
-norm_park_data <- norm_mat(park_data)
+norm_week_data <- norm_dataset(week_data)
+norm_day_data <- norm_dataset(day_data)
+norm_park_data <- norm_dataset(park_data)
 
-capacities <- unlist(read.csv("../Datasets/capacities.csv", row.names = 1)) #as.integer(unique(data[,2]))
-norm_day_data <- day_data / rep(capacities, rep(dim(day_data)[1]/length(capacities), length(capacities)))
-norm_week_data <- week_data / rep(capacities, rep(dim(week_data)[1]/length(capacities), length(capacities)))
-norm_park_data <- park_data / rep(capacities, rep(dim(park_data)[1]/length(capacities), length(capacities)))
-
-day_data_meta <- cbind(rep(capacities, rep(dim(day_data)[1]/length(capacities), length(capacities))), 
-                       rep(park_names, rep(dim(day_data)[1]/length(park_names), length(park_names))))
-
-week_data_meta <- cbind(rep(capacities, rep(dim(week_data)[1]/length(capacities), length(capacities))), 
-                       rep(park_names, rep(dim(week_data)[1]/length(park_names), length(park_names))))
-
-park_data_meta <- cbind(rep(capacities, rep(dim(park_data)[1]/length(capacities), length(capacities))), 
-                       rep(park_names, rep(dim(park_data)[1]/length(park_names), length(park_names))))
+chi_week_data <- norm_chi_2(norm_week_data)
+chi_day_data <- norm_chi_2(norm_day_data)
+chi_park_data <- norm_chi_2(norm_park_data)
 
 
 ########################################################
@@ -100,12 +90,24 @@ fviz_pca_ind(resPCA, col.ind = as.factor(unlist(park_label)), label = "none", ad
 ########################################################
 # Correspondance Analysis
 ########################################################
+row.names(chi_park_data) <- park_names
+
 res_CA <- CA(norm_park_data)
-res_CA <- CA(park_data)
+res_CA <- CA(chi_park_data)
+res_CA <- CA(chi_day_data)
+res_CA <- CA(chi_week_data)
+
 
 #saveRDS(res_CA, file = "CA.rds")
 
 #res_CA <- readRDS(file = "CA.rds")
 
 #fviz_ca_row(res_CA, label = "none", col.row = labelK, addEllipses = TRUE, xlim=c(-0.5, 0.5), ylim=c(-1.5, 1.5))
-fviz_ca_row(res_CA, label = "none", col.row = as.factor(park_names), addEllipses = TRUE, xlim=c(-0.5, 0.5), ylim=c(-1.5, 1.5))
+day_park_names <- rep(park_names, rep(dim(day_data)[1]/length(park_names), length(park_names)))
+week_park_names <- rep(park_names, rep(dim(week_data)[1]/length(park_names), length(park_names)))
+
+fviz_ca_row(res_CA, col.row = as.factor(park_names))
+fviz_ca_col(res_CA)
+
+fviz_ca_row(res_CA, label = "none", col.row = as.factor(day_park_names), addEllipses = TRUE)
+fviz_ca_row(res_CA, label = "none", col.row = as.factor(week_park_names), addEllipses = TRUE)

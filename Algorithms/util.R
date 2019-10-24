@@ -2,6 +2,18 @@ library('dplyr')
 library('reshape2')
 
 
+########################################################
+# Color
+########################################################
+degrade.bleu <- function(n){
+  return(rgb(0,0.4,1,alpha=seq(0,1,1/n)))
+}
+
+coolBlueHotRed = function(n, alpha = 1){
+  rainbow(n, end=4/6, alpha=alpha)[n:1]
+}
+
+
 
 ########################################################
 # Normalization
@@ -11,7 +23,7 @@ norm_vec <- function(x) x/sqrt(sum(x^2))
 norm_mat <- function(x) t(apply(x, MARGIN = 1, FUN = norm_vec))
 
 norm_dataset <- function(data, capacities=unlist(read.csv("../Datasets/capacities.csv", row.names = 1))){
-  return(data / rep(capacities, rep(dim(data)[1]/length(capacities), length(capacities))))
+  return(as.matrix(data / rep(capacities, rep(dim(data)[1]/length(capacities), length(capacities)))))
 }
 
 norm_chi_2 <- function(data){
@@ -21,8 +33,9 @@ norm_chi_2 <- function(data){
   for(i in 1:dim(data)[1])
     for(j in 1:dim(data)[2])
       temp[i,j] <- data[i,j] / (sqrt(col_sum[j])*row_sum[i])
-  return(temp)
+  return(as.matrix(temp))
 }
+
 
 
 ########################################################
