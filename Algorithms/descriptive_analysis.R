@@ -43,6 +43,7 @@ chi_day_data <- norm_chi_2(norm_day_data)
 chi_park_data <- norm_chi_2(norm_park_data)
 
 
+
 ########################################################
 # Box plot
 ########################################################
@@ -51,9 +52,8 @@ axis(1, at=seq(1,18,2), labels=8:16)
 boxplot(norm_week_data, ylab="Occupation normalisée", xaxt="n", xlab="Jour")
 axis(1, at=seq(1,126,18), labels=c("Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche", "Lundi"), )
 boxplot(t(norm_park_data), ylab = "Occupation")
-boxplot(t(park_data), ylab = "Occupation", )
   
-layout(1:2)
+
 
 corrplot::corrplot(cor(t(park_data)), type= "upper", order = "hclust")
 corrplot::corrplot(cor(t(norm_park_data)), type= "upper", order = "hclust")
@@ -64,13 +64,15 @@ median_order <- order(apply(t_norm_park_data, MARGIN=2, FUN=median))
 par(mar=c(10,5,3,3)) # left margin space
 boxplot(t_norm_park_data[, median_order], ylab="Occupation normalisée", names=park_names[median_order], las=2)
 
+capacities=unlist(read.csv("../Datasets/capacities.csv", row.names = 1))
 par(mar=c(2,5,2,2)) # left margin space
-barplot(capacities, las=2, xaxt="n")
+barplot(capacities[median_order], las=2, xaxt="n")
 
 
 
 t_park_data <- t(park_data)
 barplot(apply(t_park_data, MARGIN=2, FUN=var))
+
 
 
 ########################################################
