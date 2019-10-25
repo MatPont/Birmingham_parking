@@ -1,6 +1,7 @@
 setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 
 library(kohonen)
+library(mclust)
 
 source("util.R")
 source("inertia.R")
@@ -13,32 +14,66 @@ norm_week_data <- norm_dataset(week_data)
 
 chi_week_data <- norm_chi_2(norm_week_data)
 
-withins <- c()
-for(i in 2:10){
-  print(i)
-  res_som = som(chi_week_data, grid = somgrid(i, i, "hexagonal"), rlen=500) 
-  withins <- c(withins, mean(res_som$distances))
-}
-plot(withins, type="b")
+# withins <- c()
+# for(i in 2:10){
+#   print(i)
+#   res_som = som(chi_week_data, grid = somgrid(i, i, "hexagonal"), rlen=500) 
+#   withins <- c(withins, mean(res_som$distances))
+# }
+# plot(withins, type="b")
 
 #res_som = som(chi_week_data, grid = somgrid(10, 10, "rectangular"), rlen=500) 
-res_som = som(norm_week_data, grid = somgrid(10, 10, "hexagonal"), rlen=500) 
+#res_som = som(norm_week_data, grid = somgrid(10, 10, "hexagonal"), rlen=500) 
 
-res_som = som(chi_week_data, grid = somgrid(10, 10, "hexagonal"), rlen=1000)
+
+
+size <- 10
+k <- 4
+seed <- 11
+
+set.seed(seed)
+res_som = som(chi_week_data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
+
+res_kmeans <- kmeans(getCodes(res_som), k, nstart=50)
+label <- res_kmeans$cluster
+
+plot(res_som, shape="straight", bgcol=MYCOLOR[label])
+add.cluster.boundaries(res_som, label, lwd = 3) 
+
+convert_cluster <- function(som_cluster, cluster){
+  for(i in 1:length(som_cluster)){
+    for(y in unique(cluster)){
+      if(som_cluster[i] %in% which(cluster == y)){
+        som_cluster[i] <- y
+        break
+      }
+    }
+  }
+  return(som_cluster)
+}
+
+layout(matrix(1:4, nrow=2))
+plot_charge_week(norm_week_data, convert_cluster(res_som$unit.classif, res_kmeans$cluster), "Occupation normalisée")
 
 # Basic plot
-withins <- c()
-for(i in 2:10){
-  print(i)
-  res_kmeans = kmeans(getCodes(res_som), i, nstart=50) 
-  withins <- c(withins, res_kmeans$tot.withinss)
-}
-dev.off()
-plot(withins, type="b")
+# withins <- c()
+# for(i in 2:10){
+#   print(i)
+#   res_kmeans = kmeans(getCodes(res_som), i, nstart=50) 
+#   withins <- c(withins, res_kmeans$tot.withinss)
+# }
+# dev.off()
+# plot(withins, type="b")
 
-res_kmeans <- kmeans(getCodes(res_som), 2)
-plot(res_som, shape="straight", bgcol=c("steelblue1","sandybrown","yellowgreen", "gold", "plum1")[res_kmeans$cluster])
-add.cluster.boundaries(res_som, res_kmeans$cluster, lwd = 3)
+
+
+
+
+
+
+
+
+
 
 # U-matrix (matrice de voisinage)
 plot(res_som, type="dist.neighbours", palette.name = coolBlueHotRed)

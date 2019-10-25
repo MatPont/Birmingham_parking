@@ -59,3 +59,14 @@ plot_charge(norm_week_data, clus.dwt)
 
 
 
+
+
+
+
+
+library(mclust)
+res <- Mclust(chi_week_data, G = 3:3)
+plot(res, what="BIC")
+plot_charge(norm_week_data, res$classification)
+
+

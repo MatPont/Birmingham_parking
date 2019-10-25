@@ -5,6 +5,8 @@ library('reshape2')
 ########################################################
 # Color
 ########################################################
+MYCOLOR <- c("steelblue1", "seagreen1", "gold", "plum1", "darkslategray1")
+
 degrade.bleu <- function(n){
   return(rgb(0,0.4,1,alpha=seq(0,1,1/n)))
 }
@@ -87,15 +89,37 @@ make_parking_label <- function(data, num_parking=28){
 ########################################################
 # Plot
 ########################################################
-plot_charge <- function(x, cluster){
+plot_charge <- function(x, cluster, ylab=""){
   x_min <- min(x)
   x_max <- max(x)
   label <- unique(cluster)
-  plot(colMeans(x[cluster == label[1],]), type='l', col=1, lty=1, ylim = c(x_min,x_max))
+  plot(colMeans(x[cluster == label[1],]), type='l', col=1, lty=2, ylim = c(x_min,x_max), ylab=ylab)
   for(i in 2:length(label)){
-    lines(colMeans(x[cluster == label[i],]), type='l', col=i, lty=i, ylim = c(x_min,x_max)) 
+    lines(colMeans(x[cluster == label[i],]), type='l', col=i, lty=i+1, ylim = c(x_min,x_max))
   } 
-  legend("topleft",legend=1:length(label), lty=length(label), col=1:length(label))
+  legend("topleft",legend=1:length(label), lty=(1:length(label))+1, col=1:length(label))
+}
+
+plot_charge_separate <- function(x, cluster, ylab=""){
+  x_min <- min(x)
+  x_max <- max(x)
+  label <- unique(cluster)
+  plot(colMeans(x[cluster == label[1],]), type='l', col=1, lty=2, ylim = c(x_min,x_max), ylab=ylab)
+  for(i in 2:length(label)){
+    plot(colMeans(x[cluster == label[i],]), type='l', col=i, lty=i+1, ylim = c(x_min,x_max), ylab=ylab) 
+  } 
+}
+
+plot_charge_week <- function(x, cluster, ylab=""){
+  x_min <- min(x)
+  x_max <- max(x)
+  label <- unique(cluster)
+  plot(colMeans(x[cluster == label[1],]), type='l', col=1, lty=2, ylim = c(x_min,x_max), ylab=ylab, xaxt="n", xlab="Jour")
+  axis(1, at=seq(1,126,18), labels=c("Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche", "Lundi"))
+  for(i in 2:length(label)){
+    plot(colMeans(x[cluster == label[i],]), type='l', col=i, lty=i+1, ylim = c(x_min,x_max), ylab=ylab, xaxt="n", xlab="Jour") 
+    axis(1, at=seq(1,126,18), labels=c("Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche", "Lundi"))
+  } 
 }
 
 
