@@ -2,6 +2,10 @@ setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 
 library(kohonen)
 library(mclust)
+library(TSdist)
+library(TSclust)
+library(cluster)
+library(viridis)
 
 source("util.R")
 source("inertia.R")
@@ -54,6 +58,7 @@ res_som = som(chi_week_data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
 
 res_kmeans <- kmeans(getCodes(res_som), k, nstart=50)
 label <- res_kmeans$cluster
+#label <- KMedoids(data=getCodes(res_som), k=k, "wav")
 
 plot(res_som, shape="straight", bgcol=MYCOLOR[label])
 add.cluster.boundaries(res_som, label, lwd = 3) 
@@ -88,33 +93,98 @@ norm_park_data <- norm_dataset(park_data)
 
 chi_park_data <- norm_chi_2(norm_park_data)
 
-size <- 5
+# size <- 5
+# k <- 3
+# seed <- 7
+# 
+# set.seed(seed)
+# res_som = som(chi_park_data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
+# 
+# res_kmeans <- kmeans(getCodes(res_som), k, nstart=50)
+# label <- res_kmeans$cluster
+# 
+# plot(res_som, shape="straight", bgcol=MYCOLOR[label])
+# add.cluster.boundaries(res_som, label, lwd = 3) 
+# 
+# dev.off()
+# layout(1:3)
+# label <- convert_cluster(res_som$unit.classif, res_kmeans$cluster)
+# plot_charge_separate(norm_park_data, label, "Occupation normalisée")
+# 
+# for(y in unique(label)){
+#   print("======================")
+#   print(unique(week_label[label == y,]))
+#   print(length(unique(week_label[label == y,])))
+#   print(length(week_label[label == y,]))
+# }
+
 k <- 3
-seed <- 7
+clus.dwt = KMedoids(data=chi_park_data, k=k, "wav")
 
-set.seed(seed)
-res_som = som(chi_park_data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
+layout(1:k)
+plot_charge_separate(norm_park_data, clus.dwt)
 
-res_kmeans <- kmeans(getCodes(res_som), k, nstart=50)
-label <- res_kmeans$cluster
-
-plot(res_som, shape="straight", bgcol=MYCOLOR[label])
-add.cluster.boundaries(res_som, label, lwd = 3) 
-
-dev.off()
-layout(matrix(c(1,4,2,3), nrow=2))
-label <- convert_cluster(res_som$unit.classif, res_kmeans$cluster)
-plot_charge_week(norm_week_data, label, "Occupation normalisée")
-
-for(y in unique(label)){
-  print("======================")
-  print(unique(week_label[label == y,]))
-  print(length(unique(week_label[label == y,])))
-  print(length(week_label[label == y,]))
+plot_som_temporal <- function(res_som, park_data, park_cluster, mode="week"){
+  measure_per_day <- 18
+  measure_per_week <- measure_per_day * 7
+  num_week <- 11
+  num_day <- 77
+  grid_size <- res_som$grid$xdim * res_som$grid$ydim
+  
+  clusters <- unique(park_cluster)
+  for(i in 1:length(clusters)){
+    centroid <- colMeans(park_data[park_cluster == clusters[i], ])
+    #color <- t(replicate(grid_size, as.vector(col2rgb("gray88"))))
+    color <- t(col2rgb(rev(gray.colors(grid_size, start=0.85, end=0.95))))
+    
+    if(mode == "week"){
+      cut <- seq(1, length(centroid)+1, measure_per_week)
+      num <- num_week
+    }
+    else if(mode == "day"){
+      cut <- seq(1, length(centroid)+1, measure_per_day)
+      num <- num_day
+    }
+    #col <- coolBlueHotRed(num)
+    col <- viridis(num, alpha=0)
+    
+    for(i in 1:num){
+      cluster_vec <- t(as.matrix(centroid[cut[i]:(cut[i+1]-1)]))
+      pred <- predict(res_som, newdata=cluster_vec)
+      pred_unit <- pred$unit.classif
+      color[pred_unit,] <- as.vector(col2rgb(col[i]))
+    }
+    plot(res_som, shape="straight", bg=rgb(color/255))
+    #readline()
+  }
 }
 
 
+size <- 10
+seed <- 11
 
+set.seed(seed)
+week_res_som = som(norm_week_data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
+
+plot_som_temporal(week_res_som, norm_park_data, clus.dwt)
+
+
+day_data <- read.csv("../Datasets/day_dataset.csv", row.names = 1)
+day_label <- read.csv("../Datasets/day_dataset_label.csv", row.names = 1)
+norm_day_data <- norm_dataset(day_data)
+chi_day_data <- norm_chi_2(norm_day_data)
+
+data <- norm_day_data
+data <- chi_day_data
+
+size <- 10
+seed <- 11
+set.seed(seed)
+day_res_som = som(data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
+plot(day_res_som, shape="straight")
+
+plot_som_temporal(day_res_som, chi_park_data, clus.dwt, mode="day")
+plot_som_temporal(day_res_som, norm_park_data, clus.dwt, mode="day")
 
 
 ########################################################

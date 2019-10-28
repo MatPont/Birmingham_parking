@@ -49,8 +49,10 @@ chi_park_data <- norm_chi_2(norm_park_data)
 ########################################################
 boxplot(norm_day_data, ylab="Occupation normalisée", xaxt="n", xlab="Heure")
 axis(1, at=seq(1,18,2), labels=8:16)
+
 boxplot(norm_week_data, ylab="Occupation normalisée", xaxt="n", xlab="Jour")
 axis(1, at=seq(1,126,18), labels=c("Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche", "Lundi"), )
+
 boxplot(t(norm_park_data), ylab = "Occupation")
   
 
