@@ -76,6 +76,18 @@ t_park_data <- t(park_data)
 barplot(apply(t_park_data, MARGIN=2, FUN=var))
 
 
+names <- c()
+numbers <- c()
+for(i in unique(data[,1])){
+  print(i)
+  print(sum(data[,1] == i))
+  names <- c(names, i)
+  numbers <- c(numbers, sum(data[,1] == i))
+}
+names(numbers) <- names
+par(mar=c(10,5,3,3)) # left margin space
+barplot(numbers, las=2, col = ifelse(numbers < 1000, "red", "cadetblue2"))
+
 
 ########################################################
 # Principal Component Analysis
@@ -95,8 +107,13 @@ fviz_pca_ind(resPCA, col.ind = as.factor(unlist(park_label)), label = "none", ad
 # Correspondance Analysis
 ########################################################
 row.names(chi_park_data) <- park_names
+row.names(norm_park_data) <- park_names
+row.names(park_data) <- park_names
 
 res_CA <- CA(norm_park_data)
+res_CA <- CA(norm_day_data)
+res_CA <- CA(norm_week_data)
+
 res_CA <- CA(chi_park_data)
 res_CA <- CA(chi_day_data)
 res_CA <- CA(chi_week_data)
@@ -110,7 +127,7 @@ res_CA <- CA(chi_week_data)
 day_park_names <- rep(park_names, rep(dim(day_data)[1]/length(park_names), length(park_names)))
 week_park_names <- rep(park_names, rep(dim(week_data)[1]/length(park_names), length(park_names)))
 
-fviz_ca_row(res_CA, col.row = as.factor(park_names))
+fviz_ca_row(res_CA, col.row = as.factor(park_names), label="none")
 fviz_ca_col(res_CA)
 
 fviz_ca_row(res_CA, label = "none", col.row = as.factor(day_park_names), addEllipses = TRUE)

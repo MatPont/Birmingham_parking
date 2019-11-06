@@ -53,9 +53,12 @@ res_kmeans <- kmeans(norm_week_data, 3, nstart = 50)
 res_kmeans <- kmeans(chi_week_data, 2, nstart = 50)
 plot_charge(norm_week_data, res_kmeans$cluster)
 
-clus.dwt = KMedoids(data=chi_week_data, k=3, "fourier")
-clus.dwt = KMedoids(data=chi_week_data, k=3, "wav")
-plot_charge(norm_week_data, clus.dwt)
+k <- 4
+#clus.dwt = KMedoids(data=chi_week_data, k=k, "fourier")
+clus.dwt = KMedoids(data=chi_week_data, k=k, "wav")
+#plot_charge(norm_week_data, clus.dwt)
+layout(1:k)
+plot_charge_separate(norm_week_data, clus.dwt)
 
 
 
