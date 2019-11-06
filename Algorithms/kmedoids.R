@@ -1,6 +1,7 @@
 library(TSdist)
 library(TSclust)
 library(cluster)
+library(NbClust)
 
 source('../Algorithms/inertia.R')
 source('../Algorithms/util.R')
@@ -15,12 +16,12 @@ weekdf=read.csv('week_dataset.csv', row.names = 1)
 
 ###############################
 ###### Testing with Chi2 normalization
-weekdf=norm_chi_2(weekdf)
+#weekdf=norm_chi_2(weekdf)
 
 
 
 ###### ELBOW CRITERION  ######
-
+layout(1:2)
 total_inertia_per_class_kmedoids=c()
 for(k_classes in 2:10) {
   y = KMedoids(data=weekdf, k=k_classes, "wav")
@@ -43,10 +44,33 @@ plot(total_inertia_per_class_kmeans, type='b', ylab='Inertie within', xlab='Nomb
 
 
 
-### PLOT RESULT #####
+### PLOT RESULT FOR 3 CLASSES#####
+dev.off()
+layout(1:3)
+y_norm=KMedoids(data=norm_dataset(read.csv('week_dataset.csv', row.names = 1)), k=3, "wav")
+y_chi2=KMedoids(data=norm_chi_2(read.csv('week_dataset.csv', row.names = 1)), k=3, "wav")
+plot_charge_week(norm_dataset(weekdf), y_chi2, "Occupation normalisée")
+
+
+#################################
+#### Parking analysis  ##########
+#################################
+
+## Finding the number of clusters
+X=norm_dataset(read.csv('parking_dataset.csv', row.names = 1))
+res.NbClust.kmeans=NbClust(t(X), method="kmeans", min.nc=2, max.nc=8)
+res.NbClust.single=NbClust(X, distance="euclidean", method="single",min.nc=2, max.nc=8, index = "all")
+res.NbClust.complete=NbClust(X, distance="euclidean", method="complete",min.nc=2, max.nc=5, index = "all")
+res.NbClust.ward=NbClust(X, distance="euclidean", method="ward.D",min.nc=2, max.nc=8, index = "all")
+res.NbClust.average=NbClust(X, distance="euclidean", method="average",min.nc=2, max.nc=8, index = "all")
+
 
 layout(1:3)
-plot_charge_week(weekdf, KMedoids(data=weekdf, k=3, "wav"), "Occupation normalisée")
+y_norm=KMedoids(data=norm_dataset(read.csv('parking_dataset.csv', row.names = 1)), k=3, "wav")
+plot_charge_week(norm_dataset(read.csv('parking_dataset.csv', row.names = 1)), y_norm, "Occupation normalisée")
 
-weekdf_labels=read.csv('week_dataset_label.csv', row.names = 1)
+y_chi2=KMedoids(data=norm_chi_2(read.csv('parking_dataset.csv', row.names = 1)), k=3, "wav")
+plot_charge_week(norm_dataset(read.csv('parking_dataset.csv', row.names = 1)), y_chi2, "Occupation normalisée")
+
+
 
