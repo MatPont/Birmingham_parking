@@ -139,8 +139,8 @@ n_norm_park_data=t(apply(norm_park_data, 1, rollapply, n, mean, by = n))
 ####### SOM #######
 
 size <- 4
-k <- 3
-seed <- 3
+k <- 4
+seed <- 4
 
 set.seed(seed)
 res_som = som(n_chi_park_data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
@@ -158,7 +158,7 @@ plot(res_som,type="counts", palette.name = degrade.bleu, shape="straight")
 add.cluster.boundaries(res_som, label, lwd = 5) 
 
 dev.off()
-if(k %% 2 == 0){  layout(matrix(1:k, nrow=2)) }else{  layout(1:k) }
+if(k %% 2 == 0){  layout(matrix(c(4,2,1,3), nrow=2)) }else{  layout(1:k) }
 label <- convert_cluster(res_som$unit.classif, label)
 plot_charge_separate(n_norm_park_data, label, "Occupation normalisée")
 #plot_charge_separate(norm_park_data, label, "Occupation normalisée")

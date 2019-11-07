@@ -98,9 +98,16 @@ fviz_pca_ind(resPCA, col.ind = as.factor(unlist(week_label)), label = "none", ad
 resPCA <- PCA(day_data)
 fviz_pca_ind(resPCA, col.ind = as.factor(unlist(day_label)), label = "none", addEllipses = TRUE)
 
-resPCA <- PCA(park_data)
+resPCA <- PCA(norm_park_data)
 fviz_pca_ind(resPCA, col.ind = as.factor(unlist(park_label)), label = "none", addEllipses = TRUE)
 
+
+n <- 18
+n_chi_park_data=t(apply(chi_park_data, 1, rollapply, n, mean, by = n))
+n_norm_park_data=t(apply(norm_park_data, 1, rollapply, n, mean, by = n))
+
+resPCA <- PCA(n_norm_park_data)
+plot(resPCA, col.ind=clus.dwt)
 
 
 ########################################################

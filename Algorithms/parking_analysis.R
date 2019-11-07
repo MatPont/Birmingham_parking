@@ -80,12 +80,17 @@ for(i in 1:10){
 dev.off()
 plot(criterion, type="b")
 
+n_chi_park_data <- cut_dataset(chi_park_data)
+n_norm_park_data <- cut_dataset(norm_park_data)
+
+data <- n_chi_park_data
+data <- chi_park_data
 
 k <- 3
-clus.dwt = KMedoids(data=chi_park_data, k=k, "wav")
+clus.dwt = KMedoids(data=data, k=k, "wav")
 #res <- coclusterContingency(norm_park_data, nbcocluster = c(3,18), rowlabels = as.factor(clus.dwt))
-res <- coclusterContinuous(chi_park_data, nbcocluster=c(3,3), semisupervised=TRUE, rowlabels=as.integer(clus.dwt), collabels=as.integer(rep(-1, dim(chi_park_data)[2])))
-res <- coclusterContinuous(chi_park_data, nbcocluster=c(3,3))
+res <- coclusterContinuous(data, nbcocluster=c(3,3), semisupervised=TRUE, rowlabels=as.integer(clus.dwt), collabels=as.integer(rep(-1, dim(chi_park_data)[2])))
+res <- coclusterContinuous(data, nbcocluster=c(3,3))
 summary(as.factor(res["colclass"]))
 plot(res)
 
@@ -93,18 +98,27 @@ for(yi in unique(res["colclass"])){
   cat("=======", yi, "\n")
 
   print("=== heures")
-  print(which(res["colclass"] == yi) %% 18)
+  temp <- which(res["colclass"] == yi) %% 18
+  print(temp)
+  print(mean(temp))
+  print(max(temp))
   print("=== jours")
-  print(as.integer(which(res["colclass"] == 2) / 1386 * 77))
+  temp <- as.integer(round(which(res["colclass"] == yi) / 1386 * 77))
+  print(temp)
+  print(mean(temp))
+  print(max(temp))
   print("=== semaines")
-  print(as.integer(which(res["colclass"] == 2) / 1386 * 11))
+  temp <- as.integer(round(which(res["colclass"] == yi) / 1386 * 11))
+  print(temp)
+  print(mean(temp))
+  print(max(temp))
 }
 
 
 
 layout(1:k)
-plot_charge_separate(norm_park_data, res["rowclass"])
-plot_charge_separate(norm_park_data, clus.dwt)
+plot_charge_separate(n_norm_park_data, res["rowclass"])
+plot_charge_separate(n_norm_park_data, clus.dwt)
 
 
 
@@ -183,8 +197,9 @@ norm_park_data <- norm_dataset(park_data)
 chi_park_data <- norm_chi_2(norm_park_data)
 n <- 18
 n_chi_park_data=t(apply(chi_park_data, 1, rollapply, n, mean, by = n))
+n_norm_park_data=t(apply(norm_park_data, 1, rollapply, n, mean, by = n))
 
-k <- 3
+k <- 2
 clus.dwt = KMedoids(data=n_chi_park_data, k=k, "wav")
 
 label <- c()
@@ -196,14 +211,22 @@ for(park_name in rownames(temp)){
 }
 
 # Plot
-plot(temp[,2], temp[,1], pch = 19, col=label)
+birmingham <- c(52.489471, -1.898575)
+gap <- 0.001
+upperLeft <- c(max(temp[,1])+gap, min(temp[,2])-gap)
+lowerRight <- c(min(temp[,1])-gap, max(temp[,2])+gap)
+
+plot(temp[,2], temp[,1], pch = 19, col=label, xlim = c(min(temp[,2]), max(temp[,2])), ylim = c(min(temp[,1]), max(temp[,1])))
+
+library("ggmap")
+map <- get_map(c(left=upperLeft[2], bottom=lowerRight[1], right=lowerRight[2], top=upperLeft[1]), maptype = "satellite", source="google")
+ggmap(map) +
+  geom_point(data = as.data.frame(temp), aes(x = temp[,2], y = temp[,1], size = 2), colour = label, show.legend=F) +
+  geom_point(data = as.data.frame(temp), aes(x = temp[,2], y = temp[,1], size = 1), colour = "white", show.legend=F) +
+  theme_bw()
+
 
 library("OpenStreetMap")
-birmingham <- c(52.489471, -1.898575)
-gap <- 0.02
-
-layout(matrix(1:2, nrow=1))
-map <-openmap(upperLeft = birmingham-gap, lowerRight = birmingham+gap, type="osm")
+map <-openmap(upperLeft = upperLeft, lowerRight = lowerRight, type="osm")
 autoplot.OpenStreetMap(map)
-plot(temp[,2], temp[,1], pch = 19, col=label, xlim = c(birmingham[2]-gap, birmingham[2]+gap), ylim = c(birmingham[1]-gap, birmingham[1]+gap))
 

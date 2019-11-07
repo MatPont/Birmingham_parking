@@ -1,3 +1,5 @@
+library(zoo)
+
 library('dplyr')
 library('reshape2')
 
@@ -36,6 +38,11 @@ norm_chi_2 <- function(data){
     for(j in 1:dim(data)[2])
       temp[i,j] <- data[i,j] / (sqrt(col_sum[j])*row_sum[i])
   return(as.matrix(temp))
+}
+
+
+cut_dataset <- function(data, n=18){
+  return(t(apply(data, 1, rollapply, n, mean, by = n)))
 }
 
 
