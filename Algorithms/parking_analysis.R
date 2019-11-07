@@ -159,7 +159,51 @@ plot_charge_separate(norm_park_data, clus.dwt)
 
 
 
+#################################################
+# Map
+#################################################
+# Load dataset
+coord <- read.csv("../Datasets/full_dataset.csv")[,c(1,16)]
+park_names <- read.csv("../Datasets/parking_dataset_label.csv")[,2]
 
+# Get coordinates
+temp <- c()
+for(park in park_names){
+  coordinates <- jsonlite::fromJSON(as.character(coord[coord[,1] == park, 2]))$coordinates
+  if(coordinates[1] > -6){
+    temp <- rbind(temp, c(coordinates[2], coordinates[1]))
+    rownames(temp)[dim(temp)[1]] <- park 
+  }
+}
 
+# Clustering
+park_data <- read.csv("../Datasets/parking_dataset.csv", row.names = 1)
+park_label <- read.csv("../Datasets/parking_dataset_label.csv", row.names = 1)
+norm_park_data <- norm_dataset(park_data)
+chi_park_data <- norm_chi_2(norm_park_data)
+n <- 18
+n_chi_park_data=t(apply(chi_park_data, 1, rollapply, n, mean, by = n))
 
+k <- 3
+clus.dwt = KMedoids(data=n_chi_park_data, k=k, "wav")
+
+label <- c()
+for(park_name in rownames(temp)){
+  print(park_name)
+  lab <- clus.dwt[park_names == park_name]
+  print(lab)
+  label <- c(label, lab)
+}
+
+# Plot
+plot(temp[,2], temp[,1], pch = 19, col=label)
+
+library("OpenStreetMap")
+birmingham <- c(52.489471, -1.898575)
+gap <- 0.02
+
+layout(matrix(1:2, nrow=1))
+map <-openmap(upperLeft = birmingham-gap, lowerRight = birmingham+gap, type="osm")
+autoplot.OpenStreetMap(map)
+plot(temp[,2], temp[,1], pch = 19, col=label, xlim = c(birmingham[2]-gap, birmingham[2]+gap), ylim = c(birmingham[1]-gap, birmingham[1]+gap))
 

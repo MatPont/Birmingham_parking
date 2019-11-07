@@ -138,21 +138,24 @@ n_norm_park_data=t(apply(norm_park_data, 1, rollapply, n, mean, by = n))
 
 ####### SOM #######
 
-size <- 3
+size <- 4
 k <- 3
-seed <- 16
+seed <- 3
 
 set.seed(seed)
 res_som = som(n_chi_park_data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
 #res_som = som(chi_park_data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
 
-#res_kmeans <- kmeans(getCodes(res_som), k, nstart=50)
-#label <- res_kmeans$cluster
+res_kmeans <- kmeans(getCodes(res_som), k, nstart=50)
+label <- res_kmeans$cluster
 label <- KMedoids(getCodes(res_som), k, distance = "wav")
 
 dev.off()
 plot(res_som, shape="straight", bgcol=MYCOLOR[label])
 add.cluster.boundaries(res_som, label, lwd = 3)
+
+plot(res_som,type="counts", palette.name = degrade.bleu, shape="straight") 
+add.cluster.boundaries(res_som, label, lwd = 5) 
 
 dev.off()
 if(k %% 2 == 0){  layout(matrix(1:k, nrow=2)) }else{  layout(1:k) }
@@ -168,9 +171,10 @@ plot_charge_separate(n_norm_park_data, label, "Occupation normalisée")
 #   print(length(week_label[label == y,]))
 # }
 
-k <- 4
+k <- 3
 clus.dwt = KMedoids(data=n_chi_park_data, k=k, "wav")
-#clus.dwt = KMedoids(data=chi_park_data, k=k, "wav")
+clus.dwt = KMedoids(data=chi_park_data, k=k, "wav")
+clus.dwt = KMedoids(data=norm_park_data, k=k, "wav")
 
 dev.off()
 if(k %% 2 == 0){  layout(matrix(1:k, nrow=2)) }else{  layout(1:k) }
@@ -185,8 +189,10 @@ seed <- 11
 
 set.seed(seed)
 week_res_som = som(norm_week_data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
+week_res_som = som(chi_week_data, grid = somgrid(size, size, "hexagonal"), rlen=1000)
 
 plot_som_temporal(week_res_som, norm_park_data, clus.dwt)
+plot_som_temporal(week_res_som, chi_park_data, clus.dwt)
 
 
 ####### temporal SOM on days #######
@@ -205,7 +211,7 @@ set.seed(seed)
 day_res_som = som(as.matrix(data), grid = somgrid(size, size, "hexagonal"), rlen=1000)
 plot(day_res_som, shape="straight")
 
-plot_som_temporal(day_res_som, chi_park_data, clus.dwt, mode="day")
+#plot_som_temporal(day_res_som, chi_park_data, clus.dwt, mode="day")
 plot_som_temporal(day_res_som, norm_park_data, clus.dwt, mode="day")
 
 

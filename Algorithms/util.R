@@ -104,8 +104,10 @@ plot_charge_separate <- function(x, cluster, ylab=""){
   x_min <- min(x)
   x_max <- max(x)
   label <- unique(cluster)
+  print(sum(cluster == label[1]))
   plot(colMeans(x[cluster == label[1],]), type='l', col=1, lty=2, ylim = c(x_min,x_max), ylab=ylab)
   for(i in 2:length(label)){
+    print(sum(cluster == label[i]))
     plot(colMeans(x[cluster == label[i],]), type='l', col=i, lty=i+1, ylim = c(x_min,x_max), ylab=ylab) 
   } 
 }
